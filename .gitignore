@@ -1,0 +1,6 @@
+*.7z
+*.ipynb
+Numpy_Python_Cheat_Sheet.pdf
+!product.csv
+cache/
+result/
