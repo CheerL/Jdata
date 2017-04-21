@@ -5,8 +5,8 @@ from sklearn.cross_validation import train_test_split
 import xgboost as xgb
 
 LENGTH = 31
-NUM_ROUND = 1500
-LABEL_BOUND = 0.15
+NUM_ROUND = 1000
+LABEL_BOUND = 0.08
 
 
 def set_split(end_date, length=LENGTH, is_train=True, is_cate8=False):
@@ -72,8 +72,8 @@ def xgboost_test(train_end_date, test_pred_end_date):
 
 
 if __name__ == '__main__':
-    train_end_date = '2016-04-10'
-    test_pred_end_date = '2016-03-15'
-    pred_end_date = '2016-04-15'
-    xgboost_test(train_end_date, test_pred_end_date)
-    # xgboost_result(train_end_date, pred_end_date)
+    train_end_date = '2016-04-05'
+    test_pred_end_date = '2016-03-05'
+    pred_end_date = '2016-04-16'
+    # xgboost_test(train_end_date, test_pred_end_date)
+    xgboost_result(train_end_date, pred_end_date)
