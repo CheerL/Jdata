@@ -15,6 +15,7 @@ user_path = "data/JData_User.csv"
 comment_date = ["2016-02-01", "2016-02-08", "2016-02-15", "2016-02-22",
                 "2016-02-29", "2016-03-07", "2016-03-14", "2016-03-21",
                 "2016-03-28", "2016-04-04", "2016-04-11", "2016-04-15"]
+begin_date = '2016-02-01'
 
 
 def part_read_csv(filename, chunksize=1000000, func=None, func_para=None, **argv):
@@ -49,7 +50,13 @@ def get_basic_user_feat():
         age_list_before = ['-1', '15岁以下', '16-25岁',
                            '26-35岁', '36-45岁', '46-55岁', '56岁以上']
         age_list_after = [-1, 0, 1, 2, 3, 4, 5]
+        sex_list_before = [0, 1, 2]
+        sex_list_after = [-1, 0, 1]
         user['age'].replace(age_list_before, age_list_after, inplace=True)
+        user['sex'].replace(sex_list_before, sex_list_after, inplace=True)
+        user.fillna(-1, inplace=True)
+        user['age'] = user['age'].astype(int)
+        user['sex'] = user['sex'].astype(int)
         age_df = pd.get_dummies(user["age"], prefix="age")
         sex_df = pd.get_dummies(user["sex"], prefix="sex")
         user_lv_df = pd.get_dummies(user["user_lv_cd"], prefix="user_lv_cd")
@@ -91,7 +98,10 @@ def get_comments_product_feat(end_date):
         comments = pd.concat([comments, df], axis=1)  # type: pd.DataFrame
         #del comments['dt']
         #del comments['comment_num']
-        comments = comments[['sku_id', 'has_bad_comment', 'bad_comment_rate',
+        for i in range(5):
+            if 'comment_num_%d' % i not in comments.columns:
+                comments['comment_num_%d' % i] = 0
+        comments = comments[['sku_id', 'has_bad_comment', 'bad_comment_rate', 'comment_num_0',
                              'comment_num_1', 'comment_num_2', 'comment_num_3', 'comment_num_4']]
         pickle.dump(comments, open(dump_path, 'wb'))
     return comments
@@ -150,13 +160,14 @@ def get_action_feat(start_date, end_date, base_actions=None):
             base_actions = get_actions(start_date, end_date)
         else:
             base_actions = filter_date(base_actions, start_date, end_date)
-        actions = base_actions[['user_id', 'sku_id', 'type']]
+        actions = base_actions[['user_id', 'sku_id', 'cate', 'brand', 'type']]
         df = pd.get_dummies(
             actions['type'], prefix='action')
         actions = pd.concat([actions, df], axis=1)  # type: pd.DataFrame
-        actions = actions.groupby(['user_id', 'sku_id'], as_index=False).sum()
+        actions = actions.groupby(
+            ['user_id', 'sku_id', 'cate', 'brand'], as_index=False).sum()
         del actions['type']
-        # pickle.dump(actions, open(dump_path, 'wb'))
+        pickle.dump(actions, open(dump_path, 'wb'))
     return actions
 
 
@@ -184,7 +195,7 @@ def get_accumulate_action_feat(start_date, end_date, base_actions=None):
         actions['action_4'] = actions['action_4'] * actions['weights']
         actions['action_5'] = actions['action_5'] * actions['weights']
         actions['action_6'] = actions['action_6'] * actions['weights']
-        del actions['model_id']
+        # del actions['model_id']
         del actions['type']
         del actions['time']
         del actions['datetime']
@@ -220,6 +231,7 @@ def get_accumulate_user_feat(start_date, end_date, base_actions=None):
             actions['action_5']
         actions['user_action_6_ratio'] = actions['action_4'] / \
             actions['action_6']
+        # 上面的过程可能产生一些无穷大的值(被除数不是0, 除数是0), 采用中位数来填补这些值
         for rate_item in feature:
             actions[rate_item].replace(
                 np.inf, actions[actions.action_4 > 0][rate_item].quantile(0.5), inplace=True)
@@ -275,9 +287,18 @@ def get_labels(start_date, end_date):
         actions = base_actions[base_actions['type'] == 4]
         actions = actions.groupby(['user_id', 'sku_id'], as_index=False).sum()
         actions['label'] = 1
-        actions = actions[['user_id', 'sku_id', 'label']]
+        actions = actions[['user_id', 'sku_id', 'cate', 'brand', 'label']]
         pickle.dump(actions, open(dump_path, 'wb'))
     return actions
+
+
+def filter_pro(data):
+    drop_list = []
+    pro = part_read_csv(product_path)
+    for each in data.iterrows():
+        if each[1].sku_id not in pro['sku_id'].values:
+            drop_list.append(each[0])
+    data.drop(drop_list, inplace=True)
 
 
 def make_set(start_date, end_date, is_train=True, is_cate8=False):
@@ -302,9 +323,9 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         # generate 时间窗口
         # actions = get_accumulate_action_feat(train_start_date, train_end_date)
         actions = None
-        for i in (1, 2, 3, 5, 7, 10, 15, 21, 30):
-            start = (datetime.strptime(end_date, '%Y-%m-%d') -
-                     timedelta(days=i)).strftime('%Y-%m-%d')
+        for i in (3, 2, 1):
+            # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
+            start = date_change(end_date, -i)
             if start < start_date:
                 continue
             temp_actions = get_action_feat(start, end_date, base_actions)
@@ -314,20 +335,31 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
                 actions = temp_actions
             else:
                 actions = pd.merge(actions, temp_actions,
-                                   how='left', on=['user_id', 'sku_id'])
-
-        actions = pd.merge(actions, user, how='left', on='user_id')
-        actions = pd.merge(actions, user_acc, how='left', on='user_id')
-        actions = pd.merge(actions, product, how='left', on='sku_id')
-        actions = pd.merge(actions, product_acc, how='left', on='sku_id')
-        actions = pd.merge(actions, comment_acc, how='left', on='sku_id')
+                                   how='outer', on=['user_id', 'sku_id', 'cate', 'brand'])
         if is_train:
             labels = get_labels(test_start_date, test_end_date)
-            actions = pd.merge(actions, labels, how='left',
-                               on=['user_id', 'sku_id'])
+            actions = pd.merge(actions, labels, how='outer',
+                               on=['user_id', 'sku_id', 'cate', 'brand'])
+
         if is_cate8:
-            actions = actions[actions['cate'] == 8]
-        actions = actions.fillna(0)
+            # filter_pro(actions)
+            actions = actions[actions.cate==8]
+        actions = pd.merge(actions, user_acc, how='left', on='user_id')
+        actions = pd.merge(actions, product_acc, how='left', on='sku_id')
+        actions = pd.merge(actions, user, how='left', on='user_id')
+        actions = pd.merge(actions, product, how='left',
+                           on=['sku_id', 'cate', 'brand'])
+        actions = pd.merge(actions, comment_acc, how='left', on='sku_id')
+
+        # 填充缺失值
+        actions['age_-1'] = actions['age_-1'].fillna(1)
+        actions['sex_-1'] = actions['sex_-1'].fillna(1)
+        actions['user_lv_cd_1'] = actions['user_lv_cd_1'].fillna(1)
+        actions['a1_-1'] = actions['a1_-1'].fillna(1)
+        actions['a2_-1'] = actions['a2_-1'].fillna(1)
+        actions['a3_-1'] = actions['a3_-1'].fillna(1)
+        actions['comment_num_0'] = actions['comment_num_0'].fillna(1)
+        actions.fillna(0, inplace=True)
         pickle.dump(actions, open(dump_path, 'wb'))
 
     users = actions[['user_id', 'sku_id']].copy()
@@ -341,23 +373,18 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         return users, actions
 
 
-# def filter_pro(data):
-#     drop_list = []
-#     pro = part_read_csv(product_path)
-#     for each in data.iterrows():
-#         if each[1].sku_id not in pro['sku_id']:
-#             drop_list.append(each[0])
-#     data.drop(drop_list, inplace=True)
-
-
-def report(pred, fact):
-    pro = pickle.load(open('cache/basic_product.pkl', 'rb'))
-
+def report(pred, fact=None, pred_end_date=None):
     pred_buy = pred[pred.label == 1]
     pred_buy['user_id'] = pred_buy['user_id'].astype(int)
     pred_buy['pair'] = pred_buy['user_id'].map(
         str) + '-' + pred_buy['sku_id'].map(str)
 
+    if pred_end_date:
+        fact = None
+        fact = get_actions(pred_end_date, date_change(pred_end_date, 5))
+        fact = fact[(fact.cate == 8) & (fact.type == 4)]
+        filter_pro(fact)
+        fact['label'] = 1
     fact_buy = fact[fact.label == 1]
     fact_buy['user_id'] = fact_buy['user_id'].astype(int)
     fact_buy['pair'] = fact_buy['user_id'].map(

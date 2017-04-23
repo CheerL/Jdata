@@ -1,6 +1,11 @@
 *.7z
 *.ipynb
+*.csv
 Numpy_Python_Cheat_Sheet.pdf
 !product.csv
 cache/
 result/
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
+backup/
