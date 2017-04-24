@@ -1,4 +1,4 @@
-import time
+﻿import time
 import pickle
 from datetime import datetime, timedelta
 from get_feat import make_set, report, date_change
@@ -9,19 +9,20 @@ import pandas as pd
 
 LENGTH = 31
 NUM_ROUND = 100
-LABEL_BOUND = 0.08
+LABEL_BOUND = 0.06
 
 
 def set_split(end_date, length=LENGTH, is_train=True, is_cate8=False):
     start_date = date_change(end_date, -length)
+    print(start_date, end_date)
     return make_set(start_date, end_date, is_train, is_cate8)
 
 
-def xgboost_model(end_date, num_round=NUM_ROUND):
+def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
     # date = end_date
     # train_data = None
     # label = None
-    # while date > date_change('2016-02-01', LENGTH):
+    # for _ in range(num):
     #     _, temp_train_data, temp_label = set_split(date)
     #     if train_data is None and label is None:
     #         train_data = temp_train_data
@@ -61,12 +62,13 @@ def xgboost_model(end_date, num_round=NUM_ROUND):
     return bst
 
 
-def xgboost_result(train_end_date, pred_end_date):
+def xgboost_result(train_end_date, pred_end_date, bst=None):
+    if bst is None:
+        bst = xgboost_model(train_end_date)
+
     pred_user_index, pred_train_data = set_split(
         pred_end_date, is_train=False, is_cate8=True)
-    bst = xgboost_model(train_end_date)
     pred_result = bst.predict(xgb.DMatrix(pred_train_data.values))
-
     pred = pred_user_index.copy()
     pred['label'] = pred_result
     # pred['label'] = pred['label'].map(lambda x: 1 if x >= LABEL_BOUND else 0)
@@ -81,13 +83,14 @@ def xgboost_result(train_end_date, pred_end_date):
     print('成功生成预测结果')
 
 
-def xgboost_test(train_end_date, test_pred_end_date):
+def xgboost_test(train_end_date, test_pred_end_date, bst=None):
+    if bst is None:
+        bst = xgboost_model(train_end_date)
+
     test_pred_user_index, test_pred_train_data, test_pred_label = set_split(
         test_pred_end_date, is_cate8=True)
     fact = test_pred_user_index.copy()
     fact['label'] = test_pred_label
-
-    bst = xgboost_model(train_end_date)
     test_pred_result = bst.predict(xgb.DMatrix(test_pred_train_data.values))
     pred = test_pred_user_index.copy()
     pred['label'] = test_pred_result
@@ -104,5 +107,15 @@ if __name__ == '__main__':
     train_end_date = '2016-04-05'
     test_pred_end_date = '2016-04-10'
     pred_end_date = '2016-04-16'
-    xgboost_test(train_end_date, test_pred_end_date)
-    # xgboost_result(train_end_date, pred_end_date)
+    # for k in reversed(range(7)):
+    #     try:
+    #         print(k)
+    #         bst = xgboost_model(train_end_date, num=k)
+    #         xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    #         bst = xgboost_model(test_pred_end_date, num=k)
+    #         xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
+    #         break
+    #     except:
+    #         continue
+    xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    # xgboost_result(test_pred_end_date, pred_end_date)

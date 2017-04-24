@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import pickle
 import os
@@ -323,7 +323,7 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         # generate 时间窗口
         # actions = get_accumulate_action_feat(train_start_date, train_end_date)
         actions = None
-        for i in (3, 2, 1):
+        for i in (10, 3, 2, 1):
             # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
             start = date_change(end_date, -i)
             if start < start_date:
@@ -338,12 +338,13 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
                                    how='outer', on=['user_id', 'sku_id', 'cate', 'brand'])
         if is_train:
             labels = get_labels(test_start_date, test_end_date)
-            actions = pd.merge(actions, labels, how='outer',
+            actions = pd.merge(actions, labels, how='left',
                                on=['user_id', 'sku_id', 'cate', 'brand'])
 
         if is_cate8:
             # filter_pro(actions)
-            actions = actions[actions.cate==8]
+            actions = actions[actions.cate == 8]
+
         actions = pd.merge(actions, user_acc, how='left', on='user_id')
         actions = pd.merge(actions, product_acc, how='left', on='sku_id')
         actions = pd.merge(actions, user, how='left', on='user_id')
@@ -365,6 +366,7 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
     users = actions[['user_id', 'sku_id']].copy()
     del actions['user_id']
     del actions['sku_id']
+    print('划分成功')
     if is_train:
         labels = actions['label'].copy()
         del actions['label']
