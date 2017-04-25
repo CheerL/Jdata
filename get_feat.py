@@ -57,10 +57,6 @@ def get_basic_user_feat():
         user.fillna(-1, inplace=True)
         user['age'] = user['age'].astype(int)
         user['sex'] = user['sex'].astype(int)
-        age_df = pd.get_dummies(user["age"], prefix="age")
-        sex_df = pd.get_dummies(user["sex"], prefix="sex")
-        user_lv_df = pd.get_dummies(user["user_lv_cd"], prefix="user_lv_cd")
-        user = pd.concat([user['user_id'], age_df, sex_df, user_lv_df], axis=1)
         pickle.dump(user, open(dump_path, 'wb'))
     return user
 
@@ -71,11 +67,6 @@ def get_basic_product_feat():
         product = pickle.load(open(dump_path, 'rb'))
     else:
         product = part_read_csv(product_path)
-        attr1_df = pd.get_dummies(product["a1"], prefix="a1")
-        attr2_df = pd.get_dummies(product["a2"], prefix="a2")
-        attr3_df = pd.get_dummies(product["a3"], prefix="a3")
-        product = pd.concat(
-            [product[['sku_id', 'cate', 'brand']], attr1_df, attr2_df, attr3_df], axis=1)
         pickle.dump(product, open(dump_path, 'wb'))
     return product
 
@@ -323,7 +314,7 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         # generate 时间窗口
         # actions = get_accumulate_action_feat(train_start_date, train_end_date)
         actions = None
-        for i in (10, 3, 2, 1):
+        for i in (3, 2, 1):
             # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
             start = date_change(end_date, -i)
             if start < start_date:
@@ -338,13 +329,12 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
                                    how='outer', on=['user_id', 'sku_id', 'cate', 'brand'])
         if is_train:
             labels = get_labels(test_start_date, test_end_date)
-            actions = pd.merge(actions, labels, how='left',
+            actions = pd.merge(actions, labels, how='outer',
                                on=['user_id', 'sku_id', 'cate', 'brand'])
 
         if is_cate8:
             # filter_pro(actions)
             actions = actions[actions.cate == 8]
-
         actions = pd.merge(actions, user_acc, how='left', on='user_id')
         actions = pd.merge(actions, product_acc, how='left', on='sku_id')
         actions = pd.merge(actions, user, how='left', on='user_id')
@@ -366,7 +356,6 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
     users = actions[['user_id', 'sku_id']].copy()
     del actions['user_id']
     del actions['sku_id']
-    print('划分成功')
     if is_train:
         labels = actions['label'].copy()
         del actions['label']
