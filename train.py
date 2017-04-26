@@ -1,21 +1,13 @@
 ﻿import time
 import pickle
-from datetime import datetime, timedelta
-from get_feat import make_set, report, date_change
+from get_feat import make_set, report
 from sklearn.cross_validation import train_test_split
 import xgboost as xgb
-import pandas as pd
 
 
 LENGTH = 31
 NUM_ROUND = 100
 LABEL_BOUND = 0.06
-
-
-def set_split(end_date, length=LENGTH, is_train=True, is_cate8=False):
-    start_date = date_change(end_date, -length)
-    print(start_date, end_date)
-    return make_set(start_date, end_date, is_train, is_cate8)
 
 
 def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
@@ -31,7 +23,7 @@ def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
     #         train_data = pd.concat([train_data, temp_train_data], axis=0)
     #         label = pd.concat([label, temp_label], axis=0)
     #     date = date_change(date, -5)
-    _, train_data, label = set_split(end_date)
+    _, train_data, label = make_set(end_date, is_half=True)
     x_train, x_test, y_train, y_test = train_test_split(
         train_data.values, label.values, test_size=0.2, random_state=0)
     dtrain = xgb.DMatrix(x_train, label=y_train)
@@ -41,18 +33,17 @@ def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
     param = {
         'learning_rate': 0.1,
         'n_estimators': 1000,
-        'max_depth': 3,
+        'max_depth': 6,
         # 'max_delta_step': 0,
         'min_child_weight': 3,
         'gamma': 0,
         'subsample': 0.8,
         'colsample_bytree': 0.8,
         'scale_pos_weight': 1,
-        'eta': 0.05,
+        'eta': 0.1,
         'silent': 1,
         'objective': 'binary:logistic',
-        'eval_metric': 'logloss',
-        'nthread': 16
+        'eval_metric': 'logloss'
     }
     # param['eval_metric'] = "auc"
     plst = list(param.items())
@@ -66,7 +57,7 @@ def xgboost_result(train_end_date, pred_end_date, bst=None):
     if bst is None:
         bst = xgboost_model(train_end_date)
 
-    pred_user_index, pred_train_data = set_split(
+    pred_user_index, pred_train_data = make_set(
         pred_end_date, is_train=False, is_cate8=True)
     pred_result = bst.predict(xgb.DMatrix(pred_train_data.values))
     pred = pred_user_index.copy()
@@ -83,12 +74,12 @@ def xgboost_result(train_end_date, pred_end_date, bst=None):
     print('成功生成预测结果')
 
 
-def xgboost_test(train_end_date, test_pred_end_date, bst=None):
+def xgboost_test(train_end_date, test_pred_end_date, bst=None, is_half=False):
     if bst is None:
         bst = xgboost_model(train_end_date)
 
-    test_pred_user_index, test_pred_train_data, test_pred_label = set_split(
-        test_pred_end_date, is_cate8=True)
+    test_pred_user_index, test_pred_train_data, test_pred_label = make_set(
+        test_pred_end_date, is_cate8=True, is_half=is_half, is_odd=True)
     fact = test_pred_user_index.copy()
     fact['label'] = test_pred_label
     test_pred_result = bst.predict(xgb.DMatrix(test_pred_train_data.values))

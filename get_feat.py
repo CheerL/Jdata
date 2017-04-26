@@ -98,8 +98,9 @@ def filter_date(action, start_date, end_date):
 def get_action(i, start_date, end_date):
     action_path = action_base_path + "%d.csv" % (i + 1)
     func_para = {'start_date': start_date, 'end_date': end_date}
-    action = part_read_csv(
-        action_path, func=filter_date, func_para=func_para)
+    action = part_read_csv(action_path,
+                           func=filter_date,
+                           func_para=func_para)
     del action['model_id']
     return action
 
@@ -138,9 +139,8 @@ def get_action_feat(start_date, end_date, base_actions=None):
         else:
             base_actions = filter_date(base_actions, start_date, end_date)
         actions = base_actions[['user_id', 'sku_id', 'cate', 'brand', 'type']]
-        df = pd.get_dummies(
-            actions['type'], prefix='action')
-        actions = pd.concat([actions, df], axis=1)  # type: pd.DataFrame
+        type_df = pd.get_dummies(actions['type'], prefix='action')
+        actions = pd.concat([actions, type_df], axis=1)  # type: pd.DataFrame
         actions = actions.groupby(
             ['user_id', 'sku_id', 'cate', 'brand'], as_index=False).sum()
         del actions['type']
@@ -149,8 +149,8 @@ def get_action_feat(start_date, end_date, base_actions=None):
 
 
 def get_accumulate_user_feat(end_date, start_date=begin_date, base_actions=None):
-    feature = ['user_action_1_ratio', 'user_action_2_ratio', 'user_action_3_ratio',
-               'user_action_5_ratio', 'user_action_6_ratio']
+    feature = ['user_1_ratio', 'user_2_ratio',
+               'user_3_ratio', 'user_5_ratio', 'user_6_ratio']
     dump_path = 'cache/user_feat_accumulate_%s_%s.pkl' % (
         start_date, end_date)
     if os.path.exists(dump_path):
@@ -160,19 +160,14 @@ def get_accumulate_user_feat(end_date, start_date=begin_date, base_actions=None)
             base_actions = get_actions(start_date, end_date)
         else:
             base_actions = filter_date(base_actions, start_date, end_date)
-        df = pd.get_dummies(base_actions['type'], prefix='action')
-        actions = pd.concat([base_actions['user_id'], df], axis=1)
+        type_df = pd.get_dummies(base_actions['type'], prefix='action')
+        actions = pd.concat([base_actions['user_id'], type_df], axis=1)
         actions = actions.groupby(['user_id'], as_index=False).sum()
-        actions['user_action_1_ratio'] = actions['action_4'] / \
-            actions['action_1']
-        actions['user_action_2_ratio'] = actions['action_4'] / \
-            actions['action_2']
-        actions['user_action_3_ratio'] = actions['action_4'] / \
-            actions['action_3']
-        actions['user_action_5_ratio'] = actions['action_4'] / \
-            actions['action_5']
-        actions['user_action_6_ratio'] = actions['action_4'] / \
-            actions['action_6']
+        actions['user_1_ratio'] = actions['action_4'] / actions['action_1']
+        actions['user_2_ratio'] = actions['action_4'] / actions['action_2']
+        actions['user_3_ratio'] = actions['action_4'] / actions['action_3']
+        actions['user_5_ratio'] = actions['action_4'] / actions['action_5']
+        actions['user_6_ratio'] = actions['action_4'] / actions['action_6']
         # 上面的过程可能产生一些无穷大的值(被除数不是0, 除数是0), 采用中位数来填补这些值
         for rate_item in feature:
             actions[rate_item].replace(np.inf, actions[(actions.action_4 > 0) & (
@@ -185,8 +180,8 @@ def get_accumulate_user_feat(end_date, start_date=begin_date, base_actions=None)
 
 
 def get_accumulate_product_feat(end_date, start_date=begin_date, base_actions=None):
-    feature = ['product_action_1_ratio', 'product_action_2_ratio', 'product_action_3_ratio',
-               'product_action_5_ratio', 'product_action_6_ratio']
+    feature = ['product_1_ratio', 'product_2_ratio',
+               'product_3_ratio', 'product_5_ratio', 'product_6_ratio']
     dump_path = 'cache/product_feat_accumulate_%s_%s.pkl' % (
         start_date, end_date)
     if os.path.exists(dump_path):
@@ -196,19 +191,14 @@ def get_accumulate_product_feat(end_date, start_date=begin_date, base_actions=No
             base_actions = get_actions(start_date, end_date)
         else:
             base_actions = filter_date(base_actions, start_date, end_date)
-        df = pd.get_dummies(base_actions['type'], prefix='action')
-        actions = pd.concat([base_actions['sku_id'], df], axis=1)
+        type_df = pd.get_dummies(base_actions['type'], prefix='action')
+        actions = pd.concat([base_actions['sku_id'], type_df], axis=1)
         actions = actions.groupby(['sku_id'], as_index=False).sum()
-        actions['product_action_1_ratio'] = actions['action_4'] / \
-            actions['action_1']
-        actions['product_action_2_ratio'] = actions['action_4'] / \
-            actions['action_2']
-        actions['product_action_3_ratio'] = actions['action_4'] / \
-            actions['action_3']
-        actions['product_action_5_ratio'] = actions['action_4'] / \
-            actions['action_5']
-        actions['product_action_6_ratio'] = actions['action_4'] / \
-            actions['action_6']
+        actions['product_1_ratio'] = actions['action_4'] / actions['action_1']
+        actions['product_2_ratio'] = actions['action_4'] / actions['action_2']
+        actions['product_3_ratio'] = actions['action_4'] / actions['action_3']
+        actions['product_5_ratio'] = actions['action_4'] / actions['action_5']
+        actions['product_6_ratio'] = actions['action_4'] / actions['action_6']
         # 上面的过程可能产生一些无穷大的值(被除数不是0, 除数是0), 采用中位数来填补这些值
         for rate_item in feature:
             actions[rate_item].replace(np.inf, actions[(actions.action_4 > 0) & (
@@ -243,7 +233,9 @@ def filter_pro(data):
     data.drop(drop_list, inplace=True)
 
 
-def make_set(start_date, end_date, is_train=True, is_cate8=False):
+def make_set(end_date, is_train=True, is_cate8=False, is_half=False, is_odd=False):
+    date_list = (10, 3, 2, 1)
+    start_date = date_change(end_date, -date_list[0])
     if is_train:
         test_start_date = end_date
         test_end_date = date_change(end_date, 5)
@@ -258,11 +250,15 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         user = get_basic_user_feat()
         product = get_basic_product_feat()
         comment_acc = get_comments_product_feat(end_date)
-        base_actions = get_actions(start_date, end_date)
-        user_acc = get_accumulate_user_feat(end_date)
-        product_acc = get_accumulate_product_feat(end_date)
+        base_actions = get_actions(begin_date, end_date)
+        user_acc = get_accumulate_user_feat(
+            end_date, base_actions=base_actions)
+        product_acc = get_accumulate_product_feat(
+            end_date, base_actions=base_actions)
+
         actions = None
-        for i in (10, 3, 2, 1):
+        base_actions = get_actions(start_date, end_date)
+        for i in date_list:
             # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
             start = date_change(end_date, -i)
             if start < start_date:
@@ -280,9 +276,6 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
             actions = pd.merge(actions, labels, how='outer',
                                on=['user_id', 'sku_id', 'cate', 'brand'])
 
-        if is_cate8:
-            # filter_pro(actions)
-            actions = actions[actions.cate == 8]
         actions = pd.merge(actions, user_acc, how='left', on='user_id')
         actions = pd.merge(actions, product_acc, how='left', on='sku_id')
         actions = pd.merge(actions, user, how='left', on='user_id')
@@ -300,6 +293,13 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         actions['comment_num'] = actions['comment_num'].fillna(0)
         actions.fillna(0, inplace=True)
         pickle.dump(actions, open(dump_path, 'wb'))
+
+    if is_cate8:
+        actions = actions[actions.cate == 8]
+
+    if is_half:
+        actions = pd.concat([actions[actions.label == 1].iloc[int(is_odd)::2],
+                             actions[actions.label == 0].iloc[int(is_odd)::2]])
 
     users = actions[['user_id', 'sku_id']].copy()
     del actions['user_id']
