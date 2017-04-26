@@ -1,9 +1,10 @@
 ﻿import time
 import pickle
-from get_feat import make_set, report, date_change
-from sklearn.cross_validation import train_test_split
 import xgboost as xgb
 import pandas as pd
+from functools import reduce
+from get_feat import make_set, report, date_change
+from sklearn.cross_validation import train_test_split
 
 
 NUM_ROUND = 75
@@ -94,11 +95,21 @@ if __name__ == '__main__':
     train_end_date = '2016-03-26'
     test_pred_end_date = '2016-03-31'
     pred_end_date = '2016-04-16'
+    res = list()
     bst = xgboost_model(train_end_date, num=6)
-    res_1 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
-    res_2 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
-    res_3 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
-    print('aver F11: %.4f' % ((res_1[0] + res_2[0] + res_3[0]) / 3.0))
-    print('aver F12: %.4f' % ((res_1[1] + res_2[1] + res_3[1]) / 3.0))
-    print('aver scroe: %.4f' % ((res_1[2] + res_2[2] + res_3[2]) / 3.0))
+    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
+    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
+    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
+
+    res = resreduce(lambda v_x, v_y: [
+                    (v_x[i] + v_y[i]) / len(v_x) for i in range(len(v_x))], temp_res)
+    print('aver F11: %.4f' % res[0])
+    print('aver F12: %.4f' % res[1])
+    print('aver scroe: %.4f' % res[2])
     # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
+
+
+def v_plus(v_x, v_y):
+    if not len(v_x) == len(v_y):
+        raise Exception
+    else:
