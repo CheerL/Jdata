@@ -364,3 +364,4 @@ def report(pred, fact=None, pred_end_date=None):
     print('F11=' + str(F11))
     print('F12=' + str(F12))
     print('score=' + str(score))
+    return F11, F12, score

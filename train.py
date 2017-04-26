@@ -6,7 +6,7 @@ import xgboost as xgb
 import pandas as pd
 
 
-NUM_ROUND = 70
+NUM_ROUND = 75
 LABEL_BOUND = 0.06
 
 
@@ -91,9 +91,14 @@ def xgboost_test(train_end_date, test_pred_end_date, bst=None, is_half=False):
 
 
 if __name__ == '__main__':
-    train_end_date = '2016-04-05'
-    test_pred_end_date = '2016-04-10'
+    train_end_date = '2016-03-26'
+    test_pred_end_date = '2016-03-31'
     pred_end_date = '2016-04-16'
     bst = xgboost_model(train_end_date, num=6)
-    xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    res_1 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    res_2 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    res_3 = xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    print('aver F11: %.4f' % ((res_1[0] + res_2[0] + res_3[0]) / 3.0))
+    print('aver F12: %.4f' % ((res_1[1] + res_2[1] + res_3[1]) / 3.0))
+    print('aver scroe: %.4f' % ((res_1[2] + res_2[2] + res_3[2]) / 3.0))
     # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
