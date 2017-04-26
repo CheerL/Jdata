@@ -11,25 +11,23 @@ LABEL_BOUND = 0.06
 
 
 def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
-    # date = end_date
-    # train_data = None
-    # label = None
-    # for _ in range(num):
-    #     _, temp_train_data, temp_label = set_split(date)
-    #     if train_data is None and label is None:
-    #         train_data = temp_train_data
-    #         label = temp_label
-    #     else:
-    #         train_data = pd.concat([train_data, temp_train_data], axis=0)
-    #         label = pd.concat([label, temp_label], axis=0)
-    #     date = date_change(date, -5)
-    _, train_data, label = make_set(end_date, is_half=True)
+    date = end_date
+    train_data = None
+    label = None
+    for _ in range(num):
+        _, temp_train_data, temp_label = make_set(date, is_half=True)
+        if train_data is None and label is None:
+            train_data = temp_train_data
+            label = temp_label
+        else:
+            train_data = pd.concat([train_data, temp_train_data], axis=0)
+            label = pd.concat([label, temp_label], axis=0)
+        date = date_change(date, -5)
+
     x_train, x_test, y_train, y_test = train_test_split(
         train_data.values, label.values, test_size=0.2, random_state=0)
     dtrain = xgb.DMatrix(x_train, label=y_train)
     dtest = xgb.DMatrix(x_test, label=y_test)
-    # dtrain.feature_names = list(train_data.columns)
-    # dtest.feature_names = list(train_data.columns)
     param = {
         'learning_rate': 0.1,
         'n_estimators': 1000,
@@ -45,7 +43,6 @@ def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
         'objective': 'binary:logistic',
         'eval_metric': 'logloss'
     }
-    # param['eval_metric'] = "auc"
     plst = list(param.items())
     evallist = [(dtest, 'eval'), (dtrain, 'train')]
     bst = xgb.train(plst, dtrain, num_round, evallist)
@@ -54,11 +51,10 @@ def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
 
 
 def xgboost_result(train_end_date, pred_end_date, bst=None):
-    if bst is None:
-        bst = xgboost_model(train_end_date)
-
     pred_user_index, pred_train_data = make_set(
         pred_end_date, is_train=False, is_cate8=True)
+    if bst is None:
+        bst = xgboost_model(train_end_date)
     pred_result = bst.predict(xgb.DMatrix(pred_train_data.values))
     pred = pred_user_index.copy()
     pred['label'] = pred_result
@@ -75,13 +71,12 @@ def xgboost_result(train_end_date, pred_end_date, bst=None):
 
 
 def xgboost_test(train_end_date, test_pred_end_date, bst=None, is_half=False):
-    if bst is None:
-        bst = xgboost_model(train_end_date)
-
     test_pred_user_index, test_pred_train_data, test_pred_label = make_set(
         test_pred_end_date, is_cate8=True, is_half=is_half, is_odd=True)
     fact = test_pred_user_index.copy()
     fact['label'] = test_pred_label
+    if bst is None:
+        bst = xgboost_model(train_end_date)
     test_pred_result = bst.predict(xgb.DMatrix(test_pred_train_data.values))
     pred = test_pred_user_index.copy()
     pred['label'] = test_pred_result
@@ -98,15 +93,6 @@ if __name__ == '__main__':
     train_end_date = '2016-04-05'
     test_pred_end_date = '2016-04-10'
     pred_end_date = '2016-04-16'
-    # for k in reversed(range(7)):
-    #     try:
-    #         print(k)
-    #         bst = xgboost_model(train_end_date, num=k)
-    #         xgboost_test(train_end_date, test_pred_end_date, bst=bst)
-    #         bst = xgboost_model(test_pred_end_date, num=k)
-    #         xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
-    #         break
-    #     except:
-    #         continue
-    xgboost_test(train_end_date, test_pred_end_date)
-    # xgboost_result(test_pred_end_date, pred_end_date)
+    bst = xgboost_model(train_end_date, num=6)
+    xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)

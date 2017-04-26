@@ -273,7 +273,7 @@ def make_set(end_date, is_train=True, is_cate8=False, is_half=False, is_odd=Fals
                                    how='outer', on=['user_id', 'sku_id', 'cate', 'brand'])
         if is_train:
             labels = get_labels(test_start_date, test_end_date)
-            actions = pd.merge(actions, labels, how='outer',
+            actions = pd.merge(actions, labels, how='left',
                                on=['user_id', 'sku_id', 'cate', 'brand'])
 
         actions = pd.merge(actions, user_acc, how='left', on='user_id')
