@@ -97,9 +97,12 @@ if __name__ == '__main__':
     pred_end_date = '2016-04-16'
     bst = xgboost_model(train_end_date, num=6)
     temp_res = list()
-    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
-    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
-    temp_res.append(xgboost_test(train_end_date, test_pred_end_date, bst=bst))
+    temp_res.append(xgboost_test(
+        train_end_date, date_change(test_pred_end_date, 0), bst=bst))
+    temp_res.append(xgboost_test(
+        train_end_date, date_change(test_pred_end_date, 5), bst=bst))
+    temp_res.append(xgboost_test(
+        train_end_date, date_change(test_pred_end_date, 10), bst=bst))
 
     res = reduce(lambda v_x, v_y:
                  [(v_x[i] + v_y[i]) / len(v_x) for i in range(len(v_x))], temp_res)
