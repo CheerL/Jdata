@@ -109,5 +109,5 @@ if __name__ == '__main__':
     # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
 
 
-def f(parameter_list):
+def f():
     return 1, 2, 3
