@@ -162,41 +162,6 @@ def get_action_feat(start_date, end_date, base_actions=None):
     return actions
 
 
-def get_accumulate_action_feat(start_date, end_date, base_actions=None):
-    dump_path = 'cache/action_accumulate_%s_%s.pkl' % (start_date, end_date)
-    if os.path.exists(dump_path):
-        actions = pickle.load(open(dump_path, 'rb'))
-    else:
-        if base_actions is None:
-            base_actions = get_actions(start_date, end_date)
-        else:
-            base_actions = filter_date(base_actions, start_date, end_date)
-        df = pd.get_dummies(base_actions['type'], prefix='action')
-        actions = pd.concat([base_actions, df], axis=1)  # type: pd.DataFrame
-        # 近期行为按时间衰减
-        actions['weights'] = actions['time'].map(lambda x: datetime.strptime(
-            end_date, '%Y-%m-%d') - datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-        #actions['weights'] = time.strptime(end_date, '%Y-%m-%d') - actions['datetime']
-        actions['weights'] = actions['weights'].map(
-            lambda x: math.exp(-x.days))
-        print(actions.head(10))
-        actions['action_1'] = actions['action_1'] * actions['weights']
-        actions['action_2'] = actions['action_2'] * actions['weights']
-        actions['action_3'] = actions['action_3'] * actions['weights']
-        actions['action_4'] = actions['action_4'] * actions['weights']
-        actions['action_5'] = actions['action_5'] * actions['weights']
-        actions['action_6'] = actions['action_6'] * actions['weights']
-        # del actions['model_id']
-        del actions['type']
-        del actions['time']
-        del actions['datetime']
-        del actions['weights']
-        actions = actions.groupby(
-            ['user_id', 'sku_id', 'cate', 'brand'], as_index=False).sum()
-        # pickle.dump(actions, open(dump_path, 'wb'))
-    return actions
-
-
 def get_accumulate_user_feat(start_date, end_date, base_actions=None):
     feature = ['user_action_1_ratio', 'user_action_2_ratio', 'user_action_3_ratio',
                'user_action_5_ratio', 'user_action_6_ratio']
@@ -224,8 +189,8 @@ def get_accumulate_user_feat(start_date, end_date, base_actions=None):
             actions['action_6']
         # 上面的过程可能产生一些无穷大的值(被除数不是0, 除数是0), 采用中位数来填补这些值
         for rate_item in feature:
-            actions[rate_item].replace(
-                np.inf, actions[actions.action_4 > 0][rate_item].quantile(0.5), inplace=True)
+            actions[rate_item].replace(np.inf, actions[(actions.action_4 > 0) & (
+                actions[rate_item] != np.inf)][rate_item].quantile(0.5), inplace=True)
         # 同时还产生一些NaN(被除数是0, 除数是0), 采用0来填补这些值
         actions.fillna(0, inplace=True)
         actions = actions[['user_id'] + feature]
@@ -260,8 +225,8 @@ def get_accumulate_product_feat(start_date, end_date, base_actions=None):
             actions['action_6']
         # 上面的过程可能产生一些无穷大的值(被除数不是0, 除数是0), 采用中位数来填补这些值
         for rate_item in feature:
-            actions[rate_item].replace(
-                np.inf, actions[actions.action_4 > 0][rate_item].quantile(0.5), inplace=True)
+            actions[rate_item].replace(np.inf, actions[(actions.action_4 > 0) & (
+                actions[rate_item] != np.inf)][rate_item].quantile(0.5), inplace=True)
         # 同时还产生一些NaN(被除数是0, 除数是0), 采用0来填补这些值
         actions.fillna(0, inplace=True)
         actions = actions[['sku_id'] + feature]
