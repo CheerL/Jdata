@@ -106,7 +106,7 @@ if __name__ == '__main__':
     print('aver F11: %.4f' % res[0])
     print('aver F12: %.4f' % res[1])
     print('aver scroe: %.4f' % res[2])
-    # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
+    xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
 
 
 def f():
