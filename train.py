@@ -117,5 +117,5 @@ if __name__ == '__main__':
     #         break
     #     except:
     #         continue
-    xgboost_test(train_end_date, test_pred_end_date, bst=bst)
+    xgboost_test(train_end_date, test_pred_end_date)
     # xgboost_result(test_pred_end_date, pred_end_date)
