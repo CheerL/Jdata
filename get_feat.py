@@ -57,6 +57,7 @@ def get_basic_user_feat():
         user.fillna(-1, inplace=True)
         user['age'] = user['age'].astype(int)
         user['sex'] = user['sex'].astype(int)
+        del user['user_reg_tm']
         pickle.dump(user, open(dump_path, 'wb'))
     return user
 
@@ -85,6 +86,7 @@ def get_comments_product_feat(end_date):
                 break
         comments = comments[(comments.dt >= comment_date_begin)
                             & (comments.dt < comment_date_end)]
+        del comments['dt']
         pickle.dump(comments, open(dump_path, 'wb'))
     return comments
 
@@ -260,7 +262,7 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         user_acc = get_accumulate_user_feat(end_date)
         product_acc = get_accumulate_product_feat(end_date)
         actions = None
-        for i in (3, 2, 1):
+        for i in (10, 3, 2, 1):
             # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
             start = date_change(end_date, -i)
             if start < start_date:
