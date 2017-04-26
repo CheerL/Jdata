@@ -144,7 +144,7 @@ def get_action_feat(start_date, end_date, base_actions=None):
         actions = actions.groupby(
             ['user_id', 'sku_id', 'cate', 'brand'], as_index=False).sum()
         del actions['type']
-        pickle.dump(actions, open(dump_path, 'wb'))
+        # pickle.dump(actions, open(dump_path, 'wb'))
     return actions
 
 
