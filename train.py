@@ -8,7 +8,7 @@ from sklearn.cross_validation import train_test_split
 
 
 NUM_ROUND = 110
-LABEL_BOUND = 0.04
+LABEL_BOUND = 0.03
 
 
 def xgboost_model(end_date, num_round=NUM_ROUND, num=1):
