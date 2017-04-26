@@ -88,14 +88,14 @@ def xgboost_test(train_end_date, test_pred_end_date, bst=None, is_half=False):
     pickle.dump(pred, open('cache/pred_%s.pkl' % (test_pred_end_date), 'wb'))
 
     # report(pred, fact)
-    report(pred, pred_end_date=test_pred_end_date)
+    return report(pred, pred_end_date=test_pred_end_date)
 
 
 if __name__ == '__main__':
     train_end_date = '2016-03-26'
     test_pred_end_date = '2016-03-31'
     pred_end_date = '2016-04-16'
-    bst = xgboost_model(train_end_date, num=6)
+    bst = xgboost_model(train_end_date, num=1)
     temp_res = list()
     temp_res.append(xgboost_test(
         train_end_date, date_change(test_pred_end_date, 0), bst=bst))
@@ -110,7 +110,3 @@ if __name__ == '__main__':
     print('aver F12: %.4f' % res[1])
     print('aver scroe: %.4f' % res[2])
     xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
-
-
-def f():
-    return 1, 2, 3
