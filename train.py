@@ -107,9 +107,3 @@ if __name__ == '__main__':
     print('aver F12: %.4f' % res[1])
     print('aver scroe: %.4f' % res[2])
     # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
-
-
-def v_plus(v_x, v_y):
-    if not len(v_x) == len(v_y):
-        raise Exception
-    else:
