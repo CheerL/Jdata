@@ -6,7 +6,7 @@ import xgboost as xgb
 import pandas as pd
 
 
-NUM_ROUND = 60
+NUM_ROUND = 70
 LABEL_BOUND = 0.06
 
 
