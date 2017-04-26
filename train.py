@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     res = reduce(lambda v_x, v_y:
                  [v_x[i] + v_y[i] for i in range(len(v_x))], temp_res)
-    print('aver F11: %.4f' % res[0] / len(temp_res))
-    print('aver F12: %.4f' % res[1] / len(temp_res))
-    print('aver scroe: %.4f' % res[2] / len(temp_res))
+    print('aver F11: %.4f' % (res[0] / len(temp_res)))
+    print('aver F12: %.4f' % (res[1] / len(temp_res)))
+    print('aver scroe: %.4f' % (res[2] / len(temp_res)))
     xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
