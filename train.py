@@ -7,7 +7,7 @@ from get_feat import make_set, report, date_change
 from sklearn.cross_validation import train_test_split
 
 
-NUM_ROUND = 75
+NUM_ROUND = 60
 LABEL_BOUND = 0.06
 
 
@@ -109,5 +109,5 @@ if __name__ == '__main__':
     print('aver F12: %.4f' % (res[1] / len(temp_res)))
     print('aver scroe: %.4f' % (res[2] / len(temp_res)))
 
-    bst = xgboost_model('2016-04-10', num=8)
-    xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
+    # bst = xgboost_model('2016-04-10', num=8)
+    # xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
