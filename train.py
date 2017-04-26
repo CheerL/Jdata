@@ -7,7 +7,7 @@ from get_feat import make_set, report, date_change
 from sklearn.cross_validation import train_test_split
 
 
-NUM_ROUND = 120
+NUM_ROUND = 200
 LABEL_BOUND = 0.06
 
 
