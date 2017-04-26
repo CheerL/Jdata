@@ -234,7 +234,7 @@ def filter_pro(data):
 
 
 def make_set(end_date, is_train=True, is_cate8=False, is_half=False, is_odd=False):
-    date_list = (10, 3, 2, 1)
+    date_list = (15, 3, 2, 1)
     start_date = date_change(end_date, -date_list[0])
     if is_train:
         test_start_date = end_date

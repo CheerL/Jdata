@@ -59,7 +59,6 @@ def xgboost_result(train_end_date, pred_end_date, bst=None):
     pred_result = bst.predict(xgb.DMatrix(pred_train_data.values))
     pred = pred_user_index.copy()
     pred['label'] = pred_result
-    # pred['label'] = pred['label'].map(lambda x: 1 if x >= LABEL_BOUND else 0)
     pred = pred[pred['label'] >= LABEL_BOUND]
     pred = pred.sort_values(by='label', ascending=False).groupby(
         'user_id').first().reset_index()
@@ -109,4 +108,6 @@ if __name__ == '__main__':
     print('aver F11: %.4f' % (res[0] / len(temp_res)))
     print('aver F12: %.4f' % (res[1] / len(temp_res)))
     print('aver scroe: %.4f' % (res[2] / len(temp_res)))
+
+    bst = xgboost_model('2016-04-10', num=8)
     xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
