@@ -95,7 +95,7 @@ if __name__ == '__main__':
     train_end_date = '2016-03-26'
     test_pred_end_date = '2016-03-31'
     pred_end_date = '2016-04-16'
-    bst = xgboost_model(train_end_date, num=1)
+    bst = xgboost_model(train_end_date, num=8)
     temp_res = list()
     temp_res.append(xgboost_test(
         train_end_date, date_change(test_pred_end_date, 0), bst=bst))
@@ -105,8 +105,8 @@ if __name__ == '__main__':
         train_end_date, date_change(test_pred_end_date, 10), bst=bst))
 
     res = reduce(lambda v_x, v_y:
-                 [(v_x[i] + v_y[i]) / len(v_x) for i in range(len(v_x))], temp_res)
-    print('aver F11: %.4f' % res[0])
-    print('aver F12: %.4f' % res[1])
-    print('aver scroe: %.4f' % res[2])
+                 [v_x[i] + v_y[i] for i in range(len(v_x))], temp_res)
+    print('aver F11: %.4f' % res[0] / len(temp_res))
+    print('aver F12: %.4f' % res[1] / len(temp_res))
+    print('aver scroe: %.4f' % res[2] / len(temp_res))
     xgboost_result(test_pred_end_date, pred_end_date, bst=bst)
