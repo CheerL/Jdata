@@ -85,13 +85,6 @@ def get_comments_product_feat(end_date):
                 break
         comments = comments[(comments.dt >= comment_date_begin)
                             & (comments.dt < comment_date_end)]
-        df = pd.get_dummies(comments['comment_num'], prefix='comment_num')
-        comments = pd.concat([comments, df], axis=1)
-        for i in range(5):
-            if 'comment_num_%d' % i not in comments.columns:
-                comments['comment_num_%d' % i] = 0
-        comments = comments[['sku_id', 'has_bad_comment', 'bad_comment_rate', 'comment_num_0',
-                             'comment_num_1', 'comment_num_2', 'comment_num_3', 'comment_num_4']]
         pickle.dump(comments, open(dump_path, 'wb'))
     return comments
 
@@ -106,8 +99,6 @@ def get_action(i, start_date, end_date):
     action = part_read_csv(
         action_path, func=filter_date, func_para=func_para)
     del action['model_id']
-    # with open(dump_path, 'wb') as dump:
-    #     pickle.dump(action, dump)
     return action
 
 
@@ -155,7 +146,7 @@ def get_action_feat(start_date, end_date, base_actions=None):
     return actions
 
 
-def get_accumulate_user_feat(start_date, end_date, base_actions=None):
+def get_accumulate_user_feat(end_date, start_date=begin_date, base_actions=None):
     feature = ['user_action_1_ratio', 'user_action_2_ratio', 'user_action_3_ratio',
                'user_action_5_ratio', 'user_action_6_ratio']
     dump_path = 'cache/user_feat_accumulate_%s_%s.pkl' % (
@@ -191,7 +182,7 @@ def get_accumulate_user_feat(start_date, end_date, base_actions=None):
     return actions
 
 
-def get_accumulate_product_feat(start_date, end_date, base_actions=None):
+def get_accumulate_product_feat(end_date, start_date=begin_date, base_actions=None):
     feature = ['product_action_1_ratio', 'product_action_2_ratio', 'product_action_3_ratio',
                'product_action_5_ratio', 'product_action_6_ratio']
     dump_path = 'cache/product_feat_accumulate_%s_%s.pkl' % (
@@ -266,11 +257,8 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         product = get_basic_product_feat()
         comment_acc = get_comments_product_feat(end_date)
         base_actions = get_actions(start_date, end_date)
-        user_acc = get_accumulate_user_feat(start_date, end_date, base_actions)
-        product_acc = get_accumulate_product_feat(
-            start_date, end_date, base_actions)
-        # generate 时间窗口
-        # actions = get_accumulate_action_feat(train_start_date, train_end_date)
+        user_acc = get_accumulate_user_feat(end_date)
+        product_acc = get_accumulate_product_feat(end_date)
         actions = None
         for i in (3, 2, 1):
             # for i in (30, 21, 15, 10, 7, 5, 3, 2, 1):
