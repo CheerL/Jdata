@@ -86,9 +86,7 @@ def get_comments_product_feat(end_date):
         comments = comments[(comments.dt >= comment_date_begin)
                             & (comments.dt < comment_date_end)]
         df = pd.get_dummies(comments['comment_num'], prefix='comment_num')
-        comments = pd.concat([comments, df], axis=1)  # type: pd.DataFrame
-        #del comments['dt']
-        #del comments['comment_num']
+        comments = pd.concat([comments, df], axis=1)
         for i in range(5):
             if 'comment_num_%d' % i not in comments.columns:
                 comments['comment_num_%d' % i] = 0
@@ -104,17 +102,12 @@ def filter_date(action, start_date, end_date):
 
 def get_action(i, start_date, end_date):
     action_path = action_base_path + "%d.csv" % (i + 1)
-    dump_path = 'cache/action_%d_%s_%s.pkl' % (i, start_date, end_date)
-    if os.path.exists(dump_path):
-        action = pickle.load(open(dump_path, 'rb'))
-    else:
-        func_para = {'start_date': start_date, 'end_date': end_date}
-        action = part_read_csv(
-            action_path, func=filter_date, func_para=func_para)
-        del action['model_id']
-        # action.fillna(-1, inplace=True)
-        # with open(dump_path, 'wb') as dump:
-        #     pickle.dump(action, dump)
+    func_para = {'start_date': start_date, 'end_date': end_date}
+    action = part_read_csv(
+        action_path, func=filter_date, func_para=func_para)
+    del action['model_id']
+    # with open(dump_path, 'wb') as dump:
+    #     pickle.dump(action, dump)
     return action
 
 
@@ -308,13 +301,13 @@ def make_set(start_date, end_date, is_train=True, is_cate8=False):
         actions = pd.merge(actions, comment_acc, how='left', on='sku_id')
 
         # 填充缺失值
-        actions['age_-1'] = actions['age_-1'].fillna(1)
-        actions['sex_-1'] = actions['sex_-1'].fillna(1)
-        actions['user_lv_cd_1'] = actions['user_lv_cd_1'].fillna(1)
-        actions['a1_-1'] = actions['a1_-1'].fillna(1)
-        actions['a2_-1'] = actions['a2_-1'].fillna(1)
-        actions['a3_-1'] = actions['a3_-1'].fillna(1)
-        actions['comment_num_0'] = actions['comment_num_0'].fillna(1)
+        actions['age'] = actions['age'].fillna(-1)
+        actions['sex'] = actions['sex'].fillna(-1)
+        actions['user_lv_cd'] = actions['user_lv_cd'].fillna(1)
+        actions['a1'] = actions['a1'].fillna(-1)
+        actions['a2'] = actions['a2'].fillna(-1)
+        actions['a3'] = actions['a3'].fillna(-1)
+        actions['comment_num'] = actions['comment_num'].fillna(0)
         actions.fillna(0, inplace=True)
         pickle.dump(actions, open(dump_path, 'wb'))
 
