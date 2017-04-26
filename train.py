@@ -86,8 +86,8 @@ def xgboost_test(train_end_date, test_pred_end_date, bst=None, is_half=False):
     pred['label'] = pred['label'].map(lambda x: 1 if x >= LABEL_BOUND else 0)
     pickle.dump(pred, open('cache/pred_%s.pkl' % (test_pred_end_date), 'wb'))
 
-    # report(pred, fact)
-    report(pred, pred_end_date=test_pred_end_date)
+    report(pred, fact)
+    # report(pred, pred_end_date=test_pred_end_date)
 
 
 if __name__ == '__main__':
